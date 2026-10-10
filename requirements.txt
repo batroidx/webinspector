@@ -1,5 +1,0 @@
-ttkbootstrap
-requests
-beautifulsoup4
-lxml
-pyinstaller
