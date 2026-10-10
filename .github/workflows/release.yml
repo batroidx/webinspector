@@ -1,0 +1,59 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            artifact: app-windows
+            binary: dist/WebInspector.exe
+          - os: ubuntu-latest
+            artifact: app-linux
+            binary: dist/WebInspector
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Requirements install
+        run: |
+          pip install --upgrade pip
+          pip install pyinstaller ttkbootstrap requests beautifulsoup4 lxml
+          pip install -r requirements.txt
+
+      - name: Build PyInstaller
+        run: pyinstaller --onefile --noconsole --name WebInspector main.py
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: ${{ matrix.binary }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Show downloaded files
+        run: find artifacts -type f
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: artifacts/**/*

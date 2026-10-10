@@ -2,13 +2,24 @@ import threading
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import requests
+import sys
 
+import wsiparse
+import utils
 
 class App(ttk.App):
     def __init__(self):
-        super().__init__(title="WebInspector 0.1.0", theme="bootstrap-light")
+        super().__init__(title="WebInspector 0.1.0", theme="bootstrap-dark")
         self.geometry("1000x700")
         self.init_interface()
+        utils.create_menu(self, [
+            {
+                "label": "File",
+                "items": [
+                    {"label": "Exit", "command": lambda: sys.exit(0)}
+                ]
+            }
+        ])
 
     def get_section_label(self, label, obj):
         return ttk.Label(obj, text=label, font=("", 8))
@@ -33,8 +44,13 @@ class App(ttk.App):
             self.after(0, self._on_error, str(e))
 
     def _on_success(self, text):
-        self.textbox.delete("1.0", "end")
-        self.textbox.insert("1.0", text)
+        try:
+            self.textbox.delete("1.0", "end")
+            self.log("log", "Parsing request")
+            self.textbox.insert("1.0", wsiparse.parse_wsi_request(text=self.object_entry.get("1.0", "end"), html=text))
+            self.log("log", "Success")
+        except Exception as e:
+            self.log("perr", str(e))
         self._stop_loading()
 
     def _on_error(self, message):
@@ -51,6 +67,8 @@ class App(ttk.App):
                 self.status_tab_pane_content.insert("end", f"[log] {text}\n")
             case "err":
                 self.status_tab_pane_content.insert("end", f"[err] {text}\n")
+            case "perr":
+                self.status_tab_pane_content.insert("end", f"[parsing err] {text}\n")
         self.status_tab_pane_content.see("end")
 
     def init_interface(self):
@@ -63,8 +81,8 @@ class App(ttk.App):
         site_entry = ttk.Entry(left_pane, font=("Consolas", 10))
         site_entry.pack(anchor=W, fill=X)
         self.get_section_label("WSI Request", left_pane).pack(anchor=W)
-        object_entry = ttk.Text(left_pane, font=("Consolas", 10))
-        object_entry.pack(fill=BOTH)
+        self.object_entry = ttk.Text(left_pane, font=("Consolas", 10))
+        self.object_entry.pack(fill=BOTH)
 
         self.get_button = ttk.Button(
             left_pane, text="Get",
