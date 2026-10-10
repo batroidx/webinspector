@@ -3,6 +3,7 @@ import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import requests
 import sys
+from tkinter import messagebox
 
 import wsiparse
 import utils
@@ -17,6 +18,12 @@ class App(ttk.App):
                 "label": "File",
                 "items": [
                     {"label": "Exit", "command": lambda: sys.exit(0)}
+                ]
+            },
+            {
+                "label": "Help",
+                "items": [
+                    {"label": "About", "command": lambda: messagebox.showinfo("About", "Website Inspector\n\n0.1.0")}
                 ]
             }
         ])
